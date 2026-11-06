@@ -24,11 +24,11 @@ class ArchivedAnalysisTests(unittest.TestCase):
         rows = reference.replace(",", ".").splitlines()[1:]
         cases = sorted(p for p in (ROOT / "Temp_Stab").iterdir() if p.is_dir() and "-Ti(" in p.name)
         self.assertEqual(len(cases), len(rows))
-        for case, row in zip(cases, rows):
+        for case, row in zip(cases, rows, strict=True):
             expected = [float(value) for value in row.split()][1:]
             with self.subTest(case=case.name), contextlib.redirect_stdout(io.StringIO()):
                 actual = bulk.analyze_folder(str(case), "temp_v")
-                for value, reference_value in zip(actual, expected):
+                for value, reference_value in zip(actual, expected, strict=True):
                     self.assertAlmostEqual(value, reference_value, places=9)
 
     def test_missing_header_fails(self):

@@ -10,20 +10,31 @@ Start in the repository root with the Python environment from the README active:
 MPLBACKEND=Agg python -m unittest discover -s tests -v
 ```
 
-You should see three tests finish with `ok`, followed by `OK`.
-The test command reads saved data; it does not launch a LAMMPS simulation.
+The suite checks archived behavior and independently known numerical examples.
+Install the package first; subprocess tests exercise the installed CLI from a
+temporary working directory.
 
-## What the three tests check
-
-| Test | What it checks |
+| Checks | Evidence |
 | --- | --- |
-| Bulk statistics | All five bulk compositions match the saved `Resultados.txt` values. |
-| Missing log header | A file without the expected data table gives a clear error. |
-| Unfinished surface log | The incomplete (110) case gives an error instead of a misleading result. |
+| Archive regression | All 24 readable bulk/surface composition cases match the pre-refactor outputs; the incomplete (110) case fails explicitly. |
+| Layer regression | All eight TiC/TiN layers match the pre-refactor species statistics and explicit legacy width-error values. |
+| Independent calculations | Hand-calculated lattice means, sample SDs, layer widths, and surface energies. |
+| Scientific invariants | Moving the coordinate origin preserves new-mode rippling and species spreads. |
+| Input validation | Whitespace and column order, truncated/empty blocks, malformed/nonfinite values, invalid species, geometry and sampling bounds. |
+| CLI integration | Execution outside the repository, JSON provenance, output protection, plot generation, layers, and surface-energy units. |
+| Bug regression | The optional rippling helper reports the anion SD in its anion field. |
 
-Passing these tests shows that these behaviors work. It does not prove that the
-potential predicts every physical property correctly or that all paper tables
-can be rebuilt from the saved logs.
+`tests/legacy_reference.json` was captured from the working Python scripts before
+the package refactor, using the supplied logs and coordinate exports. It is a
+compatibility baseline, not an independent proof of physical correctness. Do not
+regenerate it simply to make a failing test pass.
+
+For developer installation and automated formatting, lint, and type checks, see
+[the package guide](python-package.md). CI runs these checks and the tests on
+Python 3.10 and 3.12. The local refactor verification used Python 3.10.
+
+Passing these tests does not establish equilibration, validate the potential,
+or reproduce every published table. Molecular dynamics was not rerun.
 
 ## How I checked the English translation
 

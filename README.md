@@ -19,7 +19,7 @@ embedded atom method*.
 I suggest starting with the saved data. You can make a plot without running a
 new atom simulation or installing LAMMPS.
 
-You need Git and Python 3, including Python's `venv` and `pip` tools. The commands
+You need Git and Python 3.10 or newer, including Python's `venv` and `pip` tools. The commands
 below use a **Bash terminal** on Linux, macOS, or Windows through WSL. A terminal
 is a window where you type commands. Run each line in order in the same terminal.
 
@@ -38,12 +38,13 @@ I call the folder containing this README the **repository root**.
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install -r requirements.txt
+python -m pip install -c requirements-lock.txt -r requirements.txt
 ```
 
 I use a **virtual environment**, named `.venv`, to keep this project's Python
-packages together. The last line installs NumPy for calculations, SciPy for
-fitting curves, and Matplotlib for plots. You need internet access for this step.
+packages together. The last line installs the local `ticn-analysis` package and its tested
+dependencies: NumPy for calculations, SciPy for optional historical fits, and
+Matplotlib for plots. You need internet access for this step.
 
 ### 3. Run the analysis
 
@@ -53,17 +54,18 @@ MPLBACKEND=Agg python analyze_stability.py
 ```
 
 The script reads the saved logs for five compositions. It prints results and
-creates two files in `Temp_Stab`:
+creates three files in `Temp_Stab`:
 
 | New file | What you get |
 | --- | --- |
 | `lattice_parameter.png` | A plot of crystal cell size against carbon content |
 | `results.txt` | The values used in the analysis |
+| `provenance.json` | Input hashes, settings, versions, and legacy limitations |
 
 Open the PNG with an image viewer and the text file with a text editor.
 `MPLBACKEND=Agg` saves the plot without opening a plot window. If your computer
 supports plot windows, you can instead run `python analyze_stability.py`.
-Running the script again replaces these two files.
+Running this compatibility script again replaces these three files.
 
 ### 4. Read the output
 
@@ -86,6 +88,27 @@ measure the accuracy of the whole model.
 For the saved TiC bulk log, you should get `a` close to **4.3300 Å**. This is a
 check that the saved-data analysis works. I explain its sampling limits in the
 [run guide](docs/reproduction.md).
+
+## Use the analysis package
+
+The commands above preserve the archived sampling and formulas. For new work,
+use `ticn-analyze` with explicit input paths and output locations. For example,
+from the repository root:
+
+```bash
+ticn-analyze bulk 'Temp_Stab/A-Ti(C1.0,N0.0)/temp_v1.log' \
+  --block 3 --cells 8 8 8 --geometry cubic-bulk \
+  --start 150 --output runs/bulk-tic.json
+```
+
+This selects rows 150 onward from the third thermo block. It demonstrates how
+to select a window; it does not establish that the window is equilibrated.
+The JSON contains named values with units, sample counts, settings, input hashes,
+and software versions. Existing output is rejected unless `--overwrite` is given.
+With absolute input/output paths, the command works from any directory.
+
+See the [Python package guide](docs/python-package.md) for bulk, surface, layer,
+and legacy commands, the Python API, and development checks.
 
 ## Find my final results and potential files
 

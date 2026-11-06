@@ -131,7 +131,7 @@ as the original. For new research, choose a settled part of the run after
 checking the temperature, pressure, and energy over time.
 
 The script expects all five composition folders under its current folder.
-To analyze new runs, create a separate analysis folder under `runs/`. Copy
+To analyze new runs, create a separate analysis folder under `runs/`. With the local package installed as described in the README, copy
 `analyze_stability.py` there, keep the same A–E folder names, and put each new
 log in its matching folder as `temp_v1.log`. Then run the script from that
 analysis folder. A single TiC run is not enough for its five-composition plot.
@@ -232,14 +232,16 @@ cd 'Surfaces/1k (100) Real'
 MPLBACKEND=Agg python analyze_stability.py
 ```
 
-This writes `results.txt` and `lattice_parameter.png` in that folder. My (100)
+This writes `results.txt`, `lattice_parameter.png`, and `provenance.json` in that folder. My (100)
 analyzer joins the first three thermo blocks; the other surface analyzers join
 the first two. All use `[150:-1]`. These averages do not describe only the final
 1 K stage.
 
 The surface script inherits the bulk cell-size formula, but slab volume includes
 empty space. Its reported `a` is therefore **not a physical lattice parameter**.
-I keep it as an old analysis output. The script does not calculate surface energy.
+I keep it as an old analysis output. The compatibility script does not calculate surface energy. The new
+`ticn-analyze surface-energy` command evaluates the formula below from explicit
+energy, atom-count, and area inputs; it does not infer them from the logs.
 
 The saved (110) log for `B-Ti(C0.75,N0.25)` stops during heating. Its analyzer
 reports `incomplete thermo block 2`. Rerun that case in a working copy before
@@ -309,7 +311,7 @@ My workbook's `SupAnalys` sheet contains these comparisons.
 
 I kept the original error formula, which depends on absolute z positions.
 Moving the coordinate origin can change that error estimate, so do not treat
-it as a reliable confidence interval. An unused helper, `analyze_rippling`,
-also prints the Ti spread for its X field. Other optional helpers need
+it as a reliable confidence interval. The optional `analyze_rippling` helper previously printed the Ti spread for
+its X field; the shared implementation now reports the anion spread correctly. Other optional helpers need
 `coor_*.txt`, `r*coord.txt`, or `r*data.txt` files that are not included.
 The main command above uses the supplied `.dat` files instead.

@@ -18,3 +18,11 @@ lattice_parameter.png
 
 # Isolated reruns described in the reproduction guide.
 runs/
+
+# Package builds, developer tools, and analysis provenance.
+*.egg-info/
+build/
+dist/
+.ruff_cache/
+.mypy_cache/
+provenance.json

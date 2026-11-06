@@ -1,4 +1,2 @@
-# Analysis dependencies; historical versions were not recorded.
-numpy
-matplotlib
-scipy
+# Install the local analysis package and its runtime dependencies.
+-e .
