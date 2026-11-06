@@ -1,81 +1,116 @@
-# Adapting the workflows to another material
+# Use the methods with another material
 
-Use a separate case directory and preserve the Ti–C–N reference cases. These
-workflows provide a template for bulk, elastic, and slab calculations; the
-Ti–C–N numerical parameters are material-specific.
+I share these workflows as a starting point for new research. You can reuse the
+steps for building a crystal, running a simulation, and measuring its response.
+The potential settings themselves are specific to Ti–C–N.
 
-## Select and validate an interaction model
+I recommend first running the [README example](../README.md), then copying one
+case into a new folder under `runs/`. Keep your changes there so you can compare
+them with my original files.
 
-Choose an interatomic potential validated for your elements, phases, and target
-properties. Replacing the element labels in `TiCN.meam` does not create a new
-material model. For MEAM, both element-library entries and all relevant binary
-and multi-element screening terms must be consistent. Document the source,
-version, fitting domain, and units. If developing a new potential, supply
-reference data, fitting objectives, parameter bounds, and independent validation
-sets; the original fitting workflow is not present here.
+## 1. Choose a suitable potential
 
-Update `pair_style`, `pair_coeff`, masses, atom types, and data-file atom style
-together. The potential index order and the atom-type mapping are separate
-parts of the MEAM `pair_coeff` line. Check the ordered list in both places.
+An **interatomic potential** is the mathematical model for how atoms interact.
+Choose one tested for your elements, crystal structure, and research question.
+Changing element names in `TiCN.meam` does not make it suitable for a new material.
 
-## Build and record structures
+For a MEAM model, check both the element library and the settings for interactions
+between elements. Record where the files came from and which version you use.
+If you are developing a new potential, you will also need fitting data and
+independent tests. My original fitting program is not included here.
 
-Generate the appropriate crystal phase and lattice, then converge cell size.
-For substitutional alloys, define the substituted sublattice, concentrations,
-random seeds, and number of independent realizations. Keep generator scripts
-and seeds with the data. Verify stoichiometry, atom counts, IDs, units, box
-vectors, and periodicity before dynamics.
+When I change a model, I check these settings together:
 
-The current bulk formula assumes an 8×8×8 conventional cubic supercell. Replace
-512 by the actual conventional-cell count only when the cell remains cubic.
-For anisotropic or noncubic crystals, derive lattice vectors/parameters from
-the relaxed box instead of taking a cube root of the total volume.
+| Setting or file | What must match |
+| --- | --- |
+| `pair_style` | The kind of interaction model |
+| `pair_coeff` | Potential filenames, element order, and atom-type mapping |
+| `mass` | The mass assigned to each atom type |
+| `atom_style` and the `.data` file | The format of the atom records |
 
-## Choose an equilibration and measurement protocol
+My type mapping is 1 = Ti, 2 = C, 3 = N. Your material may need a different one.
 
-Set temperature, pressure, timestep, damping, run duration, and averaging window
-for the new material. Converge timestep and inspect energy, temperature,
-pressure, structure, and atom conservation. Select the production interval
-explicitly; the legacy analyzer's early-block defaults are unsuitable as a
-general protocol. Record sample count and correlation-aware uncertainties.
+## 2. Build the starting crystal
 
-Use consistent reference phases and atom/species normalization for energies of
-formation. Total potential energy alone is not a formation energy, and the
-Ti–C–N workbook's reference energies cannot be transferred to other elements.
+Choose the crystal structure, cell dimensions, and mixture of elements.
+Check the atom count and composition before running the simulation.
+For a random mixture, save the program and random seed used to place the atoms.
+That lets someone else create the same starting structure.
 
-## Elastic response
+I test more than one box size before relying on a result. If a larger box changes
+the answer a lot, the smaller box is not yet large enough for that measurement.
+This is a **convergence check**: vary a numerical setting until the result changes
+little enough for your research goal.
 
-Adapt the matching `init_v*.mod` and `potential.mod` inputs. Converge positive
-and negative strain magnitudes and relaxation tolerances. Check the tensor's
-symmetry and mechanical stability for the material's actual crystal symmetry.
-The current cubic averaging and `(C11+2*C12)/3` formula are not a general
-noncubic reduction. A static minimized calculation does not measure
-finite-temperature elasticity; choose a suitable finite-temperature method
-when needed.
+My bulk analysis assumes 512 cubic cells. Only use
+`a = (V/512)**(1/3)` when that geometry applies. For another number of cubic
+cells, change 512 to the correct count. For a noncubic crystal, measure the
+separate box directions instead of using one cube root.
 
-## Surfaces and layer analysis
+## 3. Let the system settle before measuring
 
-Construct the desired orientation and termination with converged slab thickness,
-lateral dimensions, and vacuum. Check whether the two faces are equivalent,
-whether stoichiometry is preserved, and whether polar/charged terminations need
-special treatment. Match the bulk reference and state the chemical-potential
-convention. Barostat only appropriate periodic material directions; allowing
-vacuum to collapse would change the intended system.
+Set the temperature, pressure, time step, and run length for the new material.
+Plot temperature, pressure, and energy over time. Choose a measurement window
+after the initial changes have settled. I call this part the **production stage**.
 
-For rippling, export atom type and surface-normal position for well-defined
-layers at documented timesteps. Change the hard-coded type-1/Ti versus all-other
-species split if the new system has a different mapping; distinguish multiple
-anion species if necessary. Replace the layer count, file ranges, peak-search
-settings, and bulk reference distances. Unwrap coordinates consistently before
-pooling positions across frames. Use an uncertainty estimator appropriate for
-correlated trajectories instead of treating the legacy width-error formula as
-a confidence interval.
+My original analyzer uses early log sections, so its default selection should
+not be carried over without checking. Choose the right block and row range for
+your new run, and record that choice with the results.
 
-## Package a reproducible result
+Nearby time samples can be related to each other. To estimate uncertainty, I
+recommend comparing averages over longer blocks or running independent repeats.
+The spread of individual samples alone does not tell you how accurate the mean is.
 
-Include the exact input structures, generator seeds, potential checksums,
-software versions/build configuration, launch commands, full logs, explicit
-analysis windows, and scripts that generate final tables and figures. Store
-large trajectories in an appropriate data archive and link them from the
-repository with checksums. Validate a fresh checkout using only documented
-steps before claiming reproduction of a publication.
+For formation energy, calculate references for the new material's elements with
+the same potential. The Ti, C, and N reference values in my workbook do not apply
+to other elements.
+
+## 4. Check stiffness with small deformations
+
+Use the elastic example in the [run guide](reproduction.md). Change the matching
+`init_v*.mod` and `potential.mod` files for your structure and potential.
+
+Try several small stretches and shears. Tighten the relaxation settings and
+check that the elastic constants stay close to the same values. The constants
+form a table called the **elastic tensor**, which describes the response in
+different directions.
+
+My scripts report cubic averages and use `B = (C11 + 2*C12)/3`. A crystal with
+another symmetry can need different formulas. Also check mechanical stability:
+the structure must resist the small shape changes you are measuring.
+For stiffness at a nonzero temperature, use a method that includes thermal
+motion; my static calculation does not do that.
+
+## 5. Build and test the surface
+
+Choose the crystal face and the elements exposed at the top and bottom.
+Build a slab with enough crystal layers and enough vacuum to separate it from
+its repeated copies. Test larger thicknesses, areas, and vacuum gaps to check
+that the result is stable.
+
+Check whether the two faces are equivalent and whether the slab has the intended
+element ratio. Unequal or polar faces may need extra reference-energy choices.
+Match the bulk reference to the slab and explain how you calculate surface energy.
+Control pressure only in directions where changing the box makes physical sense;
+shrinking the vacuum gap changes the system you meant to study.
+
+For layer rippling, export atom types and positions along the direction normal
+to the surface. Record the layer definitions and simulation times. My script
+groups type 1 as Ti and every other type as X. Change this rule if your material
+needs different groups or separate carbon and nitrogen measurements.
+
+Check layer counts, file ranges, and reference distances too. If atoms cross a
+periodic boundary, put their positions in a consistent coordinate frame before
+averaging. Replace the old width-error formula with a suitable uncertainty
+calculation; I describe its limits in the run guide.
+
+## 6. Leave a record others can follow
+
+I recommend saving the exact structures, seeds, potential files, software
+versions, commands, logs, and analysis ranges used for each result. Include
+scripts that produce your final plots and tables.
+
+If trajectories are too large for Git, put them in a data archive and link to
+them. A **checksum**, such as SHA-256, helps readers check that their downloaded
+file matches yours. Finally, try your instructions in a fresh copy of the
+repository. That is the best way to find missing steps before someone else does.
