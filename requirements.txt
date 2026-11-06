@@ -1,0 +1,4 @@
+# Analysis dependencies; historical versions were not recorded.
+numpy
+matplotlib
+scipy

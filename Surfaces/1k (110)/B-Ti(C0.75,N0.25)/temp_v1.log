@@ -1,0 +1,137 @@
+
+#------- INICIALIZACION DE LA SIMULACION -------
+
+units metal         #energia:eV, distancia:A, masa:gr/mol, tiempo:picosec
+atom_style charge   #liquidos, solidos, metales
+boundary p p p      # p= periodico en x y z
+
+#------- INFORMACION DE LA ESTRUCTURA -------
+
+#archivo con la estructura del cristal
+read_data Ti(C0.75,N0.25)_surf110_v${i}.data
+read_data Ti(C0.75,N0.25)_surf110_v1.data
+Reading data file ...
+  orthogonal box = (-15.064 -16.738632 -98.478306) to (19.368 19.782019 101.52169)
+  1 by 1 by 8 MPI processor grid
+  reading atoms ...
+  4608 atoms
+  read_data CPU = 0.006 seconds
+
+mass 1 47.867
+mass 2 12.0107
+mass 3 14.0067
+
+#------- INTERACCIONES (POTENCIAL INTERATOMICO) -------
+
+pair_style meam/c
+pair_coeff * * library.meam Ti C N TiCN.meam Ti C N
+Reading MEAM library file library.meam with DATE: 2015-02-12
+
+replicate 1 1 1
+Replicating atoms ...
+  orthogonal box = (-15.064 -16.738632 -98.478306) to (19.368 19.782019 101.52169)
+  1 by 1 by 8 MPI processor grid
+  4608 atoms
+  replicate CPU = 0.001 seconds
+
+neighbor 2.0 bin
+neigh_modify every 20 delay 0 check yes
+
+#------- CALCULOS QUE REALIZARA LAMMPS -------
+
+#**** calcula la energia por atomo
+compute eperat all pe/atom
+compute 2 all temp
+compute 3 all pressure 2
+#**** salida apersonalizado de las propiedades del atomo
+#__________________________nombre_anim
+dump config all custom 100 TiCN.anim id type q x y z fx fy fz c_eperat
+
+#------- EJECUCION -------
+#Equilibrio:
+
+timestep 0.001  #paso temporal
+
+thermo 100
+thermo_style custom step pe ke temp vol press
+thermo_modify lost ignore flush yes
+
+#ensemble de temperatura:
+
+fix 3 all momentum 10 linear 1 1 1 angular rescale
+
+variable a equal (733428+$i*10)
+variable a equal (733428+1*10)
+
+velocity all create 1.0 ${a} mom yes rot yes
+velocity all create 1.0 733438 mom yes rot yes
+
+min_style cg
+minimize 1.0e-5 1.0e-7 1000 1000
+WARNING: Using 'neigh_modify every 1 delay 0 check yes' setting during minimization (../min.cpp:187)
+Neighbor list info ...
+  update every 1 steps, delay 0 steps, check yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 6.8
+  ghost atom cutoff = 6.8
+  binsize = 3.4, bins = 11 11 59
+  2 neighbor lists, perpetual/occasional/extra = 2 0 0
+  (1) pair meam/c, perpetual
+      attributes: full, newton on
+      pair build: full/bin/atomonly
+      stencil: full/bin/3d
+      bin: standard
+  (2) pair meam/c, perpetual, half/full from (1)
+      attributes: half, newton on
+      pair build: halffull/newton
+      stencil: none
+      bin: none
+Per MPI rank memory allocation (min/avg/max) = 10.43 | 12.13 | 17.55 Mbytes
+   Step         PotEng         KinEng          Temp          Volume         Press     
+         0  -30164.317      0.59550149     1              251495.81      6309.779     
+        11  -30841.217      0.59550149     1              251495.81      356.62736    
+Loop time of 0.737287 on 8 procs for 11 steps with 4608 atoms
+
+99.5% CPU use with 8 MPI tasks x no OpenMP threads
+
+Minimization stats:
+  Stopping criterion = energy tolerance
+  Energy initial, next-to-last, final = 
+     -30164.3167587225  -30840.9317614156  -30841.2169807413
+  Force two-norm initial, final = 216.19419 2.7672445
+  Force max component initial, final = 7.5157025 0.30077438
+  Final line search alpha, max atom move = 0.25208918 0.075821967
+  Iterations, force evaluations = 11 20
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 1.658e-05  | 0.23231    | 0.73129    |  64.0 | 31.51
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 1.4619e-05 | 0.042364   | 0.27799    |  44.3 |  5.75
+Output  | 0          | 0          | 0          |   0.0 |  0.00
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.4626     |            |       | 62.75
+
+Nlocal:            576 ave        2496 max           0 min
+Histogram: 6 0 0 0 0 0 0 0 1 1
+Nghost:        1039.75 ave        3967 max           0 min
+Histogram: 6 0 0 0 0 0 0 0 0 2
+Neighs:          32784 ave      152256 max           0 min
+Histogram: 6 0 0 0 0 0 0 1 0 1
+FullNghs:        65568 ave      285696 max           0 min
+Histogram: 6 0 0 0 0 0 0 0 1 1
+
+Total # of neighbors = 524544
+Ave neighs/atom = 113.83333
+Neighbor list builds = 0
+Dangerous builds = 0
+
+fix 2 all npt temp 1.0 50.0 0.1 x 0 0 1 y 0 0 1 drag 0.2
+run 20000
+Per MPI rank memory allocation (min/avg/max) = 9.323 | 11.12 | 16.98 Mbytes
+   Step         PotEng         KinEng          Temp          Volume         Press     
+        11  -30841.217      0.59550149     1              251495.81      356.62736    
+       100  -30842.986      1.1130877      1.8691602      251274.53      502.42005    
+       200  -30843.149      1.0989537      1.8454257      251093.9       107.20685    
+       300  -30843.228      1.0360065      1.7397211      250863.89     -307.02177    

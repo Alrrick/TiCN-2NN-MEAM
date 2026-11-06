@@ -1,0 +1,17 @@
+#!/bin/bash
+
+cd 'A-Ti(C1.0,N0.0)'
+mpirun -np 8 lmp_mpi < temp_code.inp
+cd ..
+cd 'B-Ti(C0.75,N0.25)'
+mpirun -np 8 lmp_mpi < temp_code.inp
+cd ..
+cd 'C-Ti(C0.5,N0.5)'
+mpirun -np 8 lmp_mpi < temp_code.inp
+cd ..
+cd 'D-Ti(C0.25,N0.75)'
+mpirun -np 8 lmp_mpi < temp_code.inp
+cd ..
+cd 'E-Ti(C0.0,N1.0)'
+mpirun -np 8 lmp_mpi < temp_code.inp
+cd ..

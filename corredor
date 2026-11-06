@@ -1,0 +1,9 @@
+#!/bin/bash
+
+cd 'Surfaces'
+bash corredor
+cd ..
+cd 'Temp_Stab'
+bash corredor
+cd ..
+

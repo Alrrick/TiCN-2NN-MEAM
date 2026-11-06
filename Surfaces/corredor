@@ -1,0 +1,14 @@
+#!/bin/bash
+
+cd '1k (100) Real'
+bash corredor
+cd ..
+cd '1k (110)'
+bash corredor
+cd ..
+cd '1k (111) Ti'
+bash corredor
+cd ..
+cd '1k (111) X'
+bash corredor
+cd ..

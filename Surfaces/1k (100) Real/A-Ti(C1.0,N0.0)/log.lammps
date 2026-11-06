@@ -1,0 +1,8 @@
+LAMMPS (23 Jun 2022 - Update 1)
+
+label loop
+variable i loop 1
+variable Temper equal 50.0
+
+log temp_v${i}.log
+log temp_v1.log

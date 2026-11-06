@@ -1,0 +1,81 @@
+
+label loop
+variable i loop 1
+variable Temper equal 1.0 
+
+log temp_v${i}.log
+
+#------- INICIALIZACION DE LA SIMULACION -------
+
+units metal         #energia:eV, distancia:A, masa:gr/mol, tiempo:picosec
+atom_style charge   #liquidos, solidos, metales
+boundary p p p      # p= periodico en x y z
+
+#------- INFORMACION DE LA ESTRUCTURA -------
+
+#archivo con la estructura del cristal
+read_data Ti(C0.75,N0.25)_surfX111_v${i}.data
+
+mass 1 47.867
+mass 2 12.0107
+mass 3 14.0067
+
+#------- INTERACCIONES (POTENCIAL INTERATOMICO) -------
+
+pair_style meam/c
+pair_coeff * * library.meam Ti C N TiCN.meam Ti C N
+
+replicate 1 1 1
+
+neighbor 2.0 bin    
+neigh_modify every 20 delay 0 check yes
+
+#------- CALCULOS QUE REALIZARA LAMMPS -------
+
+#**** calcula la energia por atomo
+compute eperat all pe/atom
+compute 2 all temp
+compute 3 all pressure 2
+#**** salida apersonalizado de las propiedades del atomo
+#__________________________nombre_anim
+dump config all custom 100 TiCN.anim id type q x y z fx fy fz c_eperat
+
+#------- EJECUCION -------
+#Equilibrio:
+
+timestep 0.001  #paso temporal
+
+thermo 100
+thermo_style custom step pe ke temp vol press
+thermo_modify lost ignore flush yes
+
+#ensemble de temperatura:
+
+fix 3 all momentum 10 linear 1 1 1 angular rescale
+
+variable a equal (733428+$i*10) 
+
+velocity all create 1.0 ${a} mom yes rot yes
+
+min_style cg
+minimize 1.0e-5 1.0e-7 1000 1000
+
+fix 2 all npt temp 1.0 50.0 0.1 x 0 0 1 y 0 0 1 drag 0.2
+run 20000
+
+unfix 2
+fix 2 all npt temp 50.0 1.0 0.1 x 0 0 1 y 0 0 1 
+run 20000
+
+unfix 2
+fix 2 all npt temp 1.0 1.0 0.1 x 0 0 1 y 0 0 1 
+run 5000
+
+clear
+next i
+jump temp_code.inp loop
+
+
+
+
+ 

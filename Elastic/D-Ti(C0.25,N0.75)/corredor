@@ -1,0 +1,11 @@
+#!/bin/bash
+
+mpirun -np 15 --oversubscribe lmp_mpi < in_v1.elastic
+
+mpirun -np 15 --oversubscribe lmp_mpi < in_v2.elastic
+
+mpirun -np 15 --oversubscribe lmp_mpi < in_v3.elastic
+
+mpirun -np 15 --oversubscribe lmp_mpi < in_v4.elastic
+
+
